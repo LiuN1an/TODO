@@ -1,12 +1,15 @@
 import { MutationTree } from 'vuex'
 import { MutationTypes } from './type'
 import { State } from '../state/index'
-import { Task, Tasks } from '../state/type'
+import { KeyTypeItem, Task, Tasks } from '../state/type'
 
-// TODO:添加ADD_RECORD对应的mutation
 export type Mutations<S = State> = {
   [MutationTypes.PUSH_TASK](state: S, item: Task): void
   [MutationTypes.ASSIGN_TASKS](state: S, item: Tasks): void
+  [MutationTypes.ADD_RECORD](
+    state: S,
+    payload: { keyTypeItem: KeyTypeItem; id: string }
+  ): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -15,5 +18,8 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [MutationTypes.ASSIGN_TASKS](state, items) {
     Object.assign(state.tasks, items)
+  },
+  [MutationTypes.ADD_RECORD](state, payload) {
+    state.keyRecord[payload.id] = [payload.keyTypeItem]
   },
 }
