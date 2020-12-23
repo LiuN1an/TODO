@@ -4,7 +4,7 @@ import { State } from '../state/index'
 import { KeyTypeItem, Task, Tasks } from '../state/type'
 import { uniqueId } from 'lodash'
 import { MutationTypes } from '../mutations/type'
-import { checkDelay, getHappenTime } from '../../utils/time'
+import { compareRecord, CompareResult } from '../../utils/records'
 
 const ID_SEED = 'WTFagsh!@4124852_'
 
@@ -21,10 +21,14 @@ export interface Actions {
   [ActionTypes.TRIGGER_KEYPRESS](
     context: ActionCustomContext,
     payLoad: {
-      item: Task
-      code: number
-      timeStamp: number
+      item: Task // 触发的taskItem
+      code: number // 触发的按键
+      timeStamp: number // 触发时间戳
     }
+  ): void
+  [ActionTypes.CLEAR_RECORD](
+    context: ActionCustomContext,
+    id: string
   ): void
 }
 
@@ -38,10 +42,10 @@ export const actions: ActionTree<State, State> & Actions = {
     commit(MutationTypes.ASSIGN_TASKS, payLoad)
   },
 
-  [ActionTypes.TRIGGER_KEYPRESS]({ state, commit }, payLoad) {
+  [ActionTypes.TRIGGER_KEYPRESS]({ state, commit, dispatch }, payLoad) {
     const findTaskRecord = state.keyRecord[payLoad.item.id]
     // 查看记录中是否有当前触发键盘事件的task的记录，
-    if (findTaskRecord) {
+    if (findTaskRecord && findTaskRecord.length) {
       // 在同一个task上已经进行触发过一次keypress
       switch (
         compareRecord(findTaskRecord, {
@@ -49,25 +53,29 @@ export const actions: ActionTree<State, State> & Actions = {
           happenTime: payLoad.timeStamp,
         })
       ) {
-        case CompareResult.CONFIRM:
+        case CompareResult.FOCUS:
+          break
+        case CompareResult.CANCAL_FOCUS:
           break
         case CompareResult.FINISHED:
           console.log('finished')
-
           break
         case CompareResult.BEFORE_INSERT:
           console.log('before insert')
 
           break
         case CompareResult.AFTER_INSERT:
+          console.log('after insert')
           break
         case CompareResult.MOVE_ON:
           break
         case CompareResult.MOVE_DOWN:
           break
         default:
+          console.log('none')
           break
       }
+      dispatch(ActionTypes.CLEAR_RECORD, payLoad.item.id)
     } else {
       // 向keyRecord[${task.id}]新增一个keyAction array
       const keyTypeItem: KeyTypeItem = {
@@ -80,68 +88,7 @@ export const actions: ActionTree<State, State> & Actions = {
       })
     }
   },
-}
-
-const enum CompareResult {
-  /**
-   * 确定
-   */
-  CONFIRM,
-  /**
-   * 已完成
-   */
-  FINISHED,
-  /**
-   * 向上插入
-   */
-  BEFORE_INSERT,
-  /**
-   * 向下插入
-   */
-  AFTER_INSERT,
-  /**
-   * 向上移动
-   */
-  MOVE_ON,
-  /**
-   * 向下移动
-   */
-  MOVE_DOWN,
-}
-
-const enum KeyCodeInfo {
-  ENTER = 13,
-  CTRL = 17,
-  Shift = 16,
-}
-/**
- * 进入连键的判断，这里来判断一些功能键位的情况
- */
-const compareRecord = (
-  record: KeyTypeItem[],
-  payLoad: KeyTypeItem
-): CompareResult => {
-  console.assert(record.length !== 0)
-  const lastRecord = record[record.length - 1]
-
-  // 优先判断延时情况
-  if (checkDelay(lastRecord.happenTime, payLoad.happenTime)) {
-    if (
-      record[record.length - 1].keyCode === KeyCodeInfo.ENTER &&
-      payLoad.keyCode === KeyCodeInfo.ENTER
-    ) {
-      // 双击enter： 使任务已完成
-      return CompareResult.FINISHED
-    }
-    // shift + enter: 向上方插入一条
-    if (
-      record[record.length - 1].keyCode === KeyCodeInfo.Shift &&
-      payLoad.keyCode === KeyCodeInfo.ENTER
-    ) {
-      // 双击enter： 使任务已完成
-      return CompareResult.BEFORE_INSERT
-    }
-    // ctrl + enter: 向下方插入一条
-  }
-  return CompareResult.AFTER_INSERT
+  [ActionTypes.CLEAR_RECORD]({ commit }, id) {
+    commit(MutationTypes.CLEAR_RECORD, id)
+  },
 }

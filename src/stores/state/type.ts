@@ -11,6 +11,7 @@ export type Tasks = Task[]
 export interface KeyTypeItem {
   keyCode: number
   happenTime: number
+  timer?: NodeJS.Timeout | undefined
 }
 
 export interface TaskKeyRecord {

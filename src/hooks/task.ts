@@ -19,7 +19,7 @@ export const useTask = () => {
     const refValue = taskRef.value
     if (refValue) {
       // TODO: keypress和keydown的关系涉及到组合键位时的按键操作
-      refValue.addEventListener('keypress', (event) => {
+      refValue.addEventListener('keydown', (event) => {
         // 与TaskItem的template书写理念耦合，所以选数组第二个作为item的顶层元素
         const triggerPlace: HTMLDivElement = <HTMLDivElement>(
           event.composedPath()[1]

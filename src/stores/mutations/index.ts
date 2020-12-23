@@ -10,6 +10,7 @@ export type Mutations<S = State> = {
     state: S,
     payload: { keyTypeItem: KeyTypeItem; id: string }
   ): void
+  [MutationTypes.CLEAR_RECORD](state: S, id: string): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -21,5 +22,8 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [MutationTypes.ADD_RECORD](state, payload) {
     state.keyRecord[payload.id] = [payload.keyTypeItem]
+  },
+  [MutationTypes.CLEAR_RECORD](state, id) {
+    state.keyRecord[id] = [] as KeyTypeItem[]
   },
 }
