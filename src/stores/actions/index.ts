@@ -10,20 +10,30 @@ const ID_SEED = 'WTFagsh!@4124852_'
 
 type ActionCustomContext = ActionContext<State, State>
 export interface Actions {
-  [ActionTypes.PUSH_TASK](
+  [ActionTypes.UNSHIFT_TASK](
     context: ActionCustomContext,
-    payLoad: Exclude<Task, 'id'>
+    index: number
   ): Promise<void>
+  [ActionTypes.PUSH_TASK](context: ActionCustomContext): Promise<void>
   [ActionTypes.ASSIGN_TASKS](
     context: ActionCustomContext,
     payLoad: Tasks
   ): void
-  [ActionTypes.TRIGGER_KEYPRESS](
+  [ActionTypes.TRIGGER_KEYDOWN](
     context: ActionCustomContext,
     payLoad: {
       item: Task // 触发的taskItem
+      index: number // 触发的taskItem下标
       code: number // 触发的按键
       timeStamp: number // 触发时间戳
+    }
+  ): void
+  [ActionTypes.TRIGGER_KEYUP](
+    context: ActionCustomContext,
+    payLoad: {
+      item: Task
+      code: number
+      timeStamp: number
     }
   ): void
   [ActionTypes.CLEAR_RECORD](
@@ -33,20 +43,30 @@ export interface Actions {
 }
 
 export const actions: ActionTree<State, State> & Actions = {
-  async [ActionTypes.PUSH_TASK]({ commit }, payLoad) {
-    payLoad['id'] = uniqueId(ID_SEED)
+  // 向前添加任务
+  async [ActionTypes.UNSHIFT_TASK]({ commit }, index) {
+    const payLoad: Task = {} as Task
+    payLoad.id = uniqueId(ID_SEED)
+    commit(MutationTypes.UNSHIFT_TASK, { item: payLoad, index })
+  },
+
+  // 向后添加任务
+  async [ActionTypes.PUSH_TASK]({ commit }) {
+    const payLoad: Task = {} as Task
+    payLoad.id = uniqueId(ID_SEED)
     commit(MutationTypes.PUSH_TASK, payLoad)
   },
 
+  //
   [ActionTypes.ASSIGN_TASKS]({ commit }, payLoad) {
     commit(MutationTypes.ASSIGN_TASKS, payLoad)
   },
 
-  [ActionTypes.TRIGGER_KEYPRESS]({ state, commit, dispatch }, payLoad) {
+  // 按键按下时判断已按下的键位来触发组合键对应的功能
+  [ActionTypes.TRIGGER_KEYDOWN]({ state, commit, dispatch }, payLoad) {
     const findTaskRecord = state.keyRecord[payLoad.item.id]
     // 查看记录中是否有当前触发键盘事件的task的记录，
     if (findTaskRecord && findTaskRecord.length) {
-      // 在同一个task上已经进行触发过一次keypress
       switch (
         compareRecord(findTaskRecord, {
           keyCode: payLoad.code,
@@ -62,10 +82,11 @@ export const actions: ActionTree<State, State> & Actions = {
           break
         case CompareResult.BEFORE_INSERT:
           console.log('before insert')
-
+          dispatch(ActionTypes.UNSHIFT_TASK, payLoad.index)
           break
         case CompareResult.AFTER_INSERT:
           console.log('after insert')
+          dispatch(ActionTypes.PUSH_TASK)
           break
         case CompareResult.MOVE_ON:
           break
@@ -88,6 +109,24 @@ export const actions: ActionTree<State, State> & Actions = {
       })
     }
   },
+
+  // 当键位松开时，把对应键的缓存清除
+  [ActionTypes.TRIGGER_KEYUP]({ state, commit }, payLoad) {
+    const findTaskRecord = state.keyRecord[payLoad.item.id]
+    if (findTaskRecord && findTaskRecord.length) {
+      const findIndex = findTaskRecord.findIndex(
+        (item) => item.keyCode === payLoad.code
+      )
+      if (findIndex !== -1) {
+        commit(MutationTypes.REMOVE_RECORD, {
+          id: payLoad.item.id,
+          index: findIndex,
+        })
+      }
+    }
+  },
+
+  // 清除某个任务对应的所有按键记录
   [ActionTypes.CLEAR_RECORD]({ commit }, id) {
     commit(MutationTypes.CLEAR_RECORD, id)
   },
