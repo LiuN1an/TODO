@@ -1,101 +1,133 @@
 import { ActionContext, ActionTree } from 'vuex'
 import { ActionTypes } from './type'
 import { State } from '../state/index'
-import { KeyType, Task, Tasks } from '../state/type'
+import { KeyTypeItem, Task, Tasks } from '../state/type'
 import { uniqueId } from 'lodash'
 import { MutationTypes } from '../mutations/type'
+import { compareRecord, CompareResult } from '../../utils/records'
 
 const ID_SEED = 'WTFagsh!@4124852_'
 
 type ActionCustomContext = ActionContext<State, State>
 export interface Actions {
-  [ActionTypes.PUSH_TASK](
+  [ActionTypes.UNSHIFT_TASK](
     context: ActionCustomContext,
-    payLoad: Exclude<Task, 'id'>
+    index: number
   ): Promise<void>
+  [ActionTypes.PUSH_TASK](context: ActionCustomContext): Promise<void>
   [ActionTypes.ASSIGN_TASKS](
     context: ActionCustomContext,
     payLoad: Tasks
   ): void
-  [ActionTypes.TRIGGER_KEYPRESS](
+  [ActionTypes.TRIGGER_KEYDOWN](
     context: ActionCustomContext,
-    payLoad: KeyType & {
-      id: string
+    payLoad: {
+      item: Task // 触发的taskItem
+      index: number // 触发的taskItem下标
+      code: number // 触发的按键
+      timeStamp: number // 触发时间戳
     }
+  ): void
+  [ActionTypes.TRIGGER_KEYUP](
+    context: ActionCustomContext,
+    payLoad: {
+      item: Task
+      code: number
+      timeStamp: number
+    }
+  ): void
+  [ActionTypes.CLEAR_RECORD](
+    context: ActionCustomContext,
+    id: string
   ): void
 }
 
 export const actions: ActionTree<State, State> & Actions = {
-  async [ActionTypes.PUSH_TASK]({ commit }, payLoad) {
-    payLoad['id'] = uniqueId(ID_SEED)
+  // 向前添加任务
+  async [ActionTypes.UNSHIFT_TASK]({ commit }, index) {
+    const payLoad: Task = {} as Task
+    payLoad.id = uniqueId(ID_SEED)
+    commit(MutationTypes.UNSHIFT_TASK, { item: payLoad, index })
+  },
+
+  // 向后添加任务
+  async [ActionTypes.PUSH_TASK]({ commit }) {
+    const payLoad: Task = {} as Task
+    payLoad.id = uniqueId(ID_SEED)
     commit(MutationTypes.PUSH_TASK, payLoad)
   },
+
+  //
   [ActionTypes.ASSIGN_TASKS]({ commit }, payLoad) {
     commit(MutationTypes.ASSIGN_TASKS, payLoad)
   },
-  [ActionTypes.TRIGGER_KEYPRESS]({ state, commit }, payLoad) {
-    const findTaskRecord = state.keyRecord[payLoad.id]
+
+  // 按键按下时判断已按下的键位来触发组合键对应的功能
+  [ActionTypes.TRIGGER_KEYDOWN]({ state, commit, dispatch }, payLoad) {
+    const findTaskRecord = state.keyRecord[payLoad.item.id]
     // 查看记录中是否有当前触发键盘事件的task的记录，
-    if (findTaskRecord) {
-      // 在同一个task上已经进行触发过一次keypress
+    if (findTaskRecord && findTaskRecord.length) {
       switch (
         compareRecord(findTaskRecord, {
-          keyCode: payLoad.keyCode,
-          happenTime: payLoad.happenTime,
+          keyCode: payLoad.code,
+          happenTime: payLoad.timeStamp,
         })
       ) {
-        case CompareResult.CONFIRM:
+        case CompareResult.FOCUS:
+          break
+        case CompareResult.CANCAL_FOCUS:
           break
         case CompareResult.FINISHED:
+          console.log('finished')
           break
         case CompareResult.BEFORE_INSERT:
+          console.log('before insert')
+          dispatch(ActionTypes.UNSHIFT_TASK, payLoad.index)
           break
         case CompareResult.AFTER_INSERT:
+          console.log('after insert')
+          dispatch(ActionTypes.PUSH_TASK)
           break
         case CompareResult.MOVE_ON:
           break
         case CompareResult.MOVE_DOWN:
           break
         default:
+          console.log('none')
           break
       }
+      dispatch(ActionTypes.CLEAR_RECORD, payLoad.item.id)
     } else {
-      commit(MutationTypes.ADD_RECORD)
+      // 向keyRecord[${task.id}]新增一个keyAction array
+      const keyTypeItem: KeyTypeItem = {
+        keyCode: payLoad.code,
+        happenTime: payLoad.timeStamp,
+      }
+      commit(MutationTypes.ADD_RECORD, {
+        keyTypeItem,
+        id: payLoad.item.id,
+      })
     }
   },
-}
 
-const enum CompareResult {
-  /**
-   * 确定
-   */
-  CONFIRM,
-  /**
-   * 已完成
-   */
-  FINISHED,
-  /**
-   * 向上插入
-   */
-  BEFORE_INSERT,
-  /**
-   * 向下插入
-   */
-  AFTER_INSERT,
-  /**
-   * 向上移动
-   */
-  MOVE_ON,
-  /**
-   * 向下移动
-   */
-  MOVE_DOWN,
-}
+  // 当键位松开时，把对应键的缓存清除
+  [ActionTypes.TRIGGER_KEYUP]({ state, commit }, payLoad) {
+    const findTaskRecord = state.keyRecord[payLoad.item.id]
+    if (findTaskRecord && findTaskRecord.length) {
+      const findIndex = findTaskRecord.findIndex(
+        (item) => item.keyCode === payLoad.code
+      )
+      if (findIndex !== -1) {
+        commit(MutationTypes.REMOVE_RECORD, {
+          id: payLoad.item.id,
+          index: findIndex,
+        })
+      }
+    }
+  },
 
-// TODO: 处理键盘事件
-const compareRecord = (
-  record: KeyType[],
-  payLoad: KeyType
-): CompareResult => {
-  return CompareResult.AFTER_INSERT
+  // 清除某个任务对应的所有按键记录
+  [ActionTypes.CLEAR_RECORD]({ commit }, id) {
+    commit(MutationTypes.CLEAR_RECORD, id)
+  },
 }

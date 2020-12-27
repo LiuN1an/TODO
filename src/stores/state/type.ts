@@ -8,11 +8,27 @@ export interface Task {
 
 export type Tasks = Task[]
 
-export interface KeyType {
+export interface KeyTypeItem {
   keyCode: number
-  happenTime: string
+  happenTime: number
+  timer?: NodeJS.Timeout | undefined
 }
 
 export interface TaskKeyRecord {
-  [key: string]: KeyType[]
+  [key: string]: KeyTypeItem[]
+}
+
+export enum ItemStatus {
+  /**
+   * 选中未聚焦
+   */
+  SELECTED,
+  /**
+   * 选中且聚焦
+   */
+  FOCUSED,
+  /**
+   * 输入是否处于composing状态
+   */
+  COMPOSING,
 }

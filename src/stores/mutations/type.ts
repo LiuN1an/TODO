@@ -1,6 +1,8 @@
 export enum MutationTypes {
+  UNSHIFT_TASK = 'unshiftTask',
   PUSH_TASK = 'pushTask',
   ASSIGN_TASKS = 'assignTasks',
-  TRIGGER_KEYPRESS = 'triggerKeyPress',
   ADD_RECORD = 'addRecord',
+  REMOVE_RECORD = 'removeRecord',
+  CLEAR_RECORD = 'clearRecord',
 }
