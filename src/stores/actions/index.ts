@@ -10,11 +10,10 @@ const ID_SEED = 'WTFagsh!@4124852_'
 
 type ActionCustomContext = ActionContext<State, State>
 export interface Actions {
-  [ActionTypes.UNSHIFT_TASK](
+  [ActionTypes.PUSH_TASK](
     context: ActionCustomContext,
     index: number
   ): Promise<void>
-  [ActionTypes.PUSH_TASK](context: ActionCustomContext): Promise<void>
   [ActionTypes.ASSIGN_TASKS](
     context: ActionCustomContext,
     payLoad: Tasks
@@ -47,14 +46,14 @@ export const actions: ActionTree<State, State> & Actions = {
   async [ActionTypes.UNSHIFT_TASK]({ commit }, index) {
     const payLoad: Task = {} as Task
     payLoad.id = uniqueId(ID_SEED)
-    commit(MutationTypes.UNSHIFT_TASK, { item: payLoad, index })
+    commit(MutationTypes.PUSH_TASK, { item: payLoad, index })
   },
 
   // 向后添加任务
-  async [ActionTypes.PUSH_TASK]({ commit }) {
+  async [ActionTypes.PUSH_TASK]({ commit }, index) {
     const payLoad: Task = {} as Task
     payLoad.id = uniqueId(ID_SEED)
-    commit(MutationTypes.PUSH_TASK, payLoad)
+    commit(MutationTypes.PUSH_TASK, { item: payLoad, index: ++index })
   },
 
   //
@@ -86,7 +85,7 @@ export const actions: ActionTree<State, State> & Actions = {
           break
         case CompareResult.AFTER_INSERT:
           console.log('after insert')
-          dispatch(ActionTypes.PUSH_TASK)
+          dispatch(ActionTypes.PUSH_TASK, payLoad.index)
           break
         case CompareResult.MOVE_ON:
           break

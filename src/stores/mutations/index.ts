@@ -4,11 +4,10 @@ import { State } from '../state/index'
 import { KeyTypeItem, Task, Tasks } from '../state/type'
 
 export type Mutations<S = State> = {
-  [MutationTypes.UNSHIFT_TASK](
+  [MutationTypes.PUSH_TASK](
     state: S,
     payload: { item: Task; index: number }
   ): void
-  [MutationTypes.PUSH_TASK](state: S, item: Task): void
   [MutationTypes.ASSIGN_TASKS](state: S, item: Tasks): void
   [MutationTypes.ADD_RECORD](
     state: S,
@@ -22,11 +21,8 @@ export type Mutations<S = State> = {
 }
 
 export const mutations: MutationTree<State> & Mutations = {
-  [MutationTypes.UNSHIFT_TASK](state, payload) {
+  [MutationTypes.PUSH_TASK](state, payload) {
     state.tasks.splice(payload.index, 0, payload.item)
-  },
-  [MutationTypes.PUSH_TASK](state, item) {
-    state.tasks.push(item)
   },
   [MutationTypes.ASSIGN_TASKS](state, items) {
     Object.assign(state.tasks, items)
