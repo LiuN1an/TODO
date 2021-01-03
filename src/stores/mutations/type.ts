@@ -5,4 +5,5 @@ export enum MutationTypes {
   ADD_RECORD = 'addRecord',
   REMOVE_RECORD = 'removeRecord',
   CLEAR_RECORD = 'clearRecord',
+  SAVE = 'save',
 }

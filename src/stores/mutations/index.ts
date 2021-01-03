@@ -2,6 +2,8 @@ import { MutationTree } from 'vuex'
 import { MutationTypes } from './type'
 import { State } from '../state/index'
 import { KeyTypeItem, Task, Tasks } from '../state/type'
+import { setLocalItem } from '../../utils/storage'
+import { TODO_TASKS } from '../cache'
 
 export type Mutations<S = State> = {
   [MutationTypes.PUSH_TASK](
@@ -18,6 +20,7 @@ export type Mutations<S = State> = {
     state: S,
     payload: { id: string; index: number }
   ): void
+  [MutationTypes.SAVE](state: S): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -35,5 +38,9 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [MutationTypes.REMOVE_RECORD](state, payload) {
     state.keyRecord[payload.id].splice(payload.index, 1)
+  },
+  [MutationTypes.SAVE](state) {
+    console.log('store success')
+    setLocalItem(TODO_TASKS, state.tasks)
   },
 }

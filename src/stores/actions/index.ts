@@ -25,6 +25,7 @@ export interface Actions {
       index: number // 触发的taskItem下标
       code: number // 触发的按键
       timeStamp: number // 触发时间戳
+      exec?: () => void // 额外执行的函数
     }
   ): void
   [ActionTypes.TRIGGER_KEYUP](
@@ -39,6 +40,7 @@ export interface Actions {
     context: ActionCustomContext,
     id: string
   ): void
+  [ActionTypes.SAVE](context: ActionCustomContext): void
 }
 
 export const actions: ActionTree<State, State> & Actions = {
@@ -91,6 +93,10 @@ export const actions: ActionTree<State, State> & Actions = {
           break
         case CompareResult.MOVE_DOWN:
           break
+        case CompareResult.SAVE:
+          commit(MutationTypes.SAVE)
+          payLoad.exec && payLoad.exec()
+          break
         default:
           console.log('none')
           break
@@ -128,5 +134,10 @@ export const actions: ActionTree<State, State> & Actions = {
   // 清除某个任务对应的所有按键记录
   [ActionTypes.CLEAR_RECORD]({ commit }, id) {
     commit(MutationTypes.CLEAR_RECORD, id)
+  },
+
+  // 保存
+  [ActionTypes.SAVE]({ commit }) {
+    commit(MutationTypes.SAVE)
   },
 }

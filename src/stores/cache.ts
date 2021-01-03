@@ -1,21 +1,31 @@
+import { getLocalItem } from '../utils/storage'
 import { useStore } from 'vuex'
 import { ActionTypes } from './actions/type'
-import { Tasks } from './state/type'
 
-const getTasks = () => {
-  const tasks: Tasks = []
-  for (let i = 0; i < 100; i++) {
-    tasks.push({
-      id: 'asdasd',
-      createTime: new Date().toTimeString(),
-      title: 'asdhjkkasd',
-      content: 'qwenbczxc',
-    })
-  }
-  return tasks
+export const TODO_TASKS = 'todo-tasks'
+const getTasks = (): string => {
+  // const tasks: Tasks = []
+  // for (let i = 0; i < 100; i++) {
+  //   tasks.push({
+  //     id: 'asdasd',
+  //     createTime: new Date().toTimeString(),
+  //     title: 'asdhjkkasd',
+  //     content: 'qwenbczxc',
+  //   })
+  // }
+  // return tasks
+  const cache = getLocalItem(TODO_TASKS)
+  return cache
 }
-export const importTasksCache = (): void => {
+export const importTasksCache = (): boolean => {
   const store = useStore()
   const tasks = getTasks()
-  tasks && store.dispatch(ActionTypes.ASSIGN_TASKS, tasks)
+  console.log(tasks)
+
+  if (tasks) {
+    store.dispatch(ActionTypes.ASSIGN_TASKS, tasks)
+    return false
+  } else {
+    return true
+  }
 }

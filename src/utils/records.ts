@@ -3,6 +3,7 @@ import {
   checkAfterInsert,
   checkBeforeInsert,
   checkFinished,
+  checkSave,
 } from './check'
 
 export const enum CompareResult {
@@ -35,6 +36,10 @@ export const enum CompareResult {
    */
   MOVE_DOWN,
   /**
+   * 保存
+   */
+  SAVE,
+  /**
    * 无
    */
   NONE,
@@ -60,6 +65,10 @@ export const compareRecord = (
 
   if (checkAfterInsert(record, payLoad)) {
     return CompareResult.AFTER_INSERT
+  }
+
+  if (checkSave(record, payLoad)) {
+    return CompareResult.SAVE
   }
 
   // 优先判断延时情况，默许对于所有组合键必须在一定时间范围内才有效

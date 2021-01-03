@@ -38,6 +38,7 @@ export const useTask = () => {
           index: index,
           code,
           timeStamp: event.timeStamp,
+          exec: (): void => event.preventDefault(),
         })
       })
       refValue.addEventListener('keyup', (event) => {

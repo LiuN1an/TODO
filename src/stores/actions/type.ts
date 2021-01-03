@@ -5,4 +5,5 @@ export enum ActionTypes {
   TRIGGER_KEYDOWN = 'triggerKeyDown',
   CLEAR_RECORD = 'clearRecord',
   TRIGGER_KEYUP = 'triggerKeyUp',
+  SAVE = 'save',
 }

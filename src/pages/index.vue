@@ -13,6 +13,7 @@
 import { onMounted, onUpdated, ref } from 'vue'
 import TaskItem from '../components/TaskItem.vue'
 import { useTask } from '../hooks/task'
+import { importTasksCache } from '../stores/cache'
 
 export default {
   name: 'home',
@@ -30,8 +31,10 @@ export default {
       }
     }
     onMounted(() => {
-      if (buttonRef) {
-        document.addEventListener('keypress', listenBodyEnter)
+      if (importTasksCache()) {
+        if (buttonRef) {
+          document.addEventListener('keypress', listenBodyEnter)
+        }
       }
     })
 
